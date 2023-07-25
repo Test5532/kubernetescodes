@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config-db-name-configmap # This is name of config map and it matches environment variable configMapKeyRef/name. 
+  namespace: mongo
+data:
+  mongo-init-database-name : testdatabase

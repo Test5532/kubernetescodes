@@ -1,0 +1,52 @@
+apiVersion: apps/v1   #API VERSION NEEDED DEPENDING ON API GROUP.
+kind: Deployment # Kind is deployment 
+metadata:
+  name: mongoexpress-deployment  # Name of deployment
+  namespace: mongo
+  labels:
+    app: mongoexpress
+spec:  ## POD SPECIFICATION
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongoexpress  
+  strategy:    # .spec.strategy specifies the strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1  ## Maximum number of pods that can be UNAvailable at a time 
+        maxSurge: 1  ## Maximum number of additional PODS that can be created at a time
+  template:
+    metadata:
+      labels:
+        app: mongoexpress
+    spec:  ## CONTAINER SPECIFICATION
+      containers:
+        - image: mongo-express:latest  ## image from Docker hub or any registry like ECR
+          name: mongo-express # Name of container inside POD
+          # ports: # These ports are used to listen for incoming traffic or communicate with other containers or services within the Pod or the cluster.
+          # - containerPort: 8081 # We expose container port so request can come in from here 
+        
+          env:  # Declare environment variable 
+            - name : ME_CONFIG_MONGODB_ADMINUSERNAME  #  MongoDB admin username
+              valueFrom: 
+                secretKeyRef:   # This helps take value from secrets
+                  name: mongo-express-secret # Name of secret
+                  key: me-config-mongodb-adminusername  # Key whose value will be taken
+
+            - name : ME_CONFIG_MONGODB_ADMINPASSWORD  #  MongoDB admin password
+              valueFrom: 
+                secretKeyRef:   # This helps take value from secrets
+                  name: mongo-express-secret # Name of secret
+                  key: me-config-mongodb-adminpassword  # Key whose value will be taken
+
+            - name : ME_CONFIG_MONGODB_PORT # MongoDB port
+              valueFrom: 
+                configMapKeyRef:   # This helps take value from config map
+                  name: mongo-express-configmap # Name of configmap
+                  key: me_config_mongodb-port  # Key whose value will be taken
+
+            - name : ME_CONFIG_MONGODB_SERVER # MongoDB container/service name. Use comma delimited list of host names for replica sets.
+              valueFrom: 
+                configMapKeyRef:   # This helps take value from config map
+                  name: mongo-express-configmap # Name of configmap
+                  key: me_config_mongodb-server  # Key whose value will be taken

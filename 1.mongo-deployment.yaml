@@ -1,0 +1,44 @@
+apiVersion: apps/v1   #API VERSION NEEDED DEPENDING ON API GROUP.
+kind: Deployment # Kind is deployment 
+metadata:
+  name: mongo-deployment  # Name of deployment
+  namespace: mongo
+  labels:
+    app: mongodb
+spec:  ## POD SPECIFICATION
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb  
+  strategy:    # .spec.strategy specifies the strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1  ## Maximum number of pods that can be UNAvailable at a time 
+        maxSurge: 1  ## Maximum number of additional PODS that can be created at a time
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:  ## CONTAINER SPECIFICATION
+      containers:
+        - image: mongo  ## image from Docker hub or any registry like ECR
+          name: mongo-database # Name of container inside POD
+          # ports: # These ports are used to listen for incoming traffic or communicate with other containers or services within the Pod or the cluster.
+          # - containerPort: 8081 # We expose container port so request can come in from here 
+        
+          env:  # Declare environment variable 
+            - name : MONGO_INITDB_DATABASE  
+              valueFrom: 
+                configMapKeyRef:   # This helps take value from config map
+                  name: mongo-config-db-name-configmap # Name of configmap
+                  key: mongo-init-database-name  # Key whose value will be taken
+            - name : MONGO_INITDB_ROOT_USERNAME
+              valueFrom: 
+                secretKeyRef: # This helps take value from secrets
+                  name: mongo-config-db-credentials-secrets # Name of secrets
+                  key: mongo-initdb-root-username # Key whose value will be taken
+            - name : MONGO_INITDB_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef: # This helps take value from secrets
+                  name: mongo-config-db-credentials-secrets  # Name of secrets
+                  key: mongo-initdb-root-password # This helps take value from secrets
